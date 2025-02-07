@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class User(models.Model):
     unique_num = models.BigAutoField(primary_key=True)  # 자동 증가하는 기본 키
@@ -16,3 +17,20 @@ class User(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class UserStatus(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    status = models.IntegerField()  # 1(정상), 2(주의), 3(응급)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.name} - {self.status} at {self.updated_at}"
+    
+class UserPosture(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    posture = models.IntegerField()  # 0(Downstair), 1(Upstair), 2(Running), 3(Sitdown), 4(StandUp), 5(Walking), 6(Fall)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.name} - {self.posture} at {self.updated_at}"

@@ -54,7 +54,8 @@ const Login = () => {
           <label>Password:</label>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <button type="submit">Login</button>
+        <button type="submit">로그인</button>
+        <button type="button" onClick={() => navigate('/register')}>회원가입</button>
       </form>
     </div>
   );

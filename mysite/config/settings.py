@@ -114,7 +114,7 @@ DATABASES = {
         'PORT': '3306',
         # 'OPTIONS': {
         #     'ssl': {
-        #         'ca': '/home/azureuser/Desktop/config/DigiCertGlobalRootG2.crt.pem',
+        #         'ca': '/home/azureuser/Desktop/son/safety-detection/new_key.pem',
         #         'ssl-mode': 'VERIFY_CA',
         #     },
         # },
