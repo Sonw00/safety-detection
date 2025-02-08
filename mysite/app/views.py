@@ -16,7 +16,7 @@ def update_user_status(request):
             return JsonResponse({'message': '로그인이 필요합니다.'}, status=403)
 
         user = User.objects.get(id=user_id)
-        status = random.choice([1, 2, 3])
+        status = random.choice([0, 1, 2])
         user_status = UserStatus.objects.create(user=user, status=status, updated_at=timezone.now())
         return JsonResponse({'message': '상태가 갱신되었습니다.', 'status': status, 'updated_at': user_status.updated_at})
 
