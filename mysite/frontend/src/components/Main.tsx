@@ -4,6 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import * as echarts from 'echarts';
 import dayjs from 'dayjs';
 
+
+interface TooltipParam {
+  data: number;
+  axisValue: string;
+  seriesName: string;
+}
+
+
 const Main = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
@@ -123,21 +131,41 @@ const Main = () => {
     const sortedData = data.sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
     const option = {
       title: {
-        text: 'User Status Over Time'
+        text: 'User Status Over Time',
+        left: 'center',
+        textStyle: {
+          fontSize: 24,         // 제목 글자 크기 증가
+          fontWeight: 'bold'    // 제목 글자 굵기 설정
+        }
       },
       tooltip: {
         trigger: 'axis',
         formatter: (params: any) => {
-          const statusText = params[0].data[1] === 1 ? '정상' : params[0].data[1] === 2 ? '주의' : '위험';
+          const statusText = params[0].data[1] === 0 ? '정상' : params[0].data[1] === 1 ? '주의' : '위험';
           return `${params[0].data[0]}<br/>상태: ${statusText}`;
         }
       },
       xAxis: {
         type: 'category',
-        data: sortedData.map(item => dayjs(item.updated_at).format('MM-DD HH:mm:ss'))
+        data: sortedData.map(item => dayjs(item.updated_at).format('MM-DD HH:mm:ss')),
+        axisTick: {
+          alignWithLabel: true  // 눈금을 레이블 중앙에 맞춤
+        }
       },
       yAxis: {
-        type: 'value'
+        type: 'category',
+        data: ['정상', '주의', '위험'],
+        axisLabel: {
+          formatter: (value: string) => {
+            if (value === '정상') return '정상';
+            if (value === '주의') return '주의';
+            if (value === '위험') return '위험';
+            return value;
+          }
+        },
+        axisTick: {
+          alignWithLabel: true  // 눈금을 레이블 중앙에 맞춤
+        }
       },
       series: [
         {
@@ -148,67 +176,130 @@ const Main = () => {
           },
           itemStyle: {
             color: (params: any) => {
-              if (params.data[1] === 1) return 'green'; // 점의 색깔을 초록색으로 변경
-              if (params.data[1] === 2) return 'yellow';
-              return 'red';
+              if (params.data[1] === 0) return '#5470C6'; // 점의 색깔을 초록색으로 변경
+              if (params.data[1] === 1) return '#fac858';
+              return '#ee6666';
             },
             borderWidth: 2
           },
-          symbolSize: 10,
-          symbol: 'circle' // 점의 모양을 원으로 설정
+          symbolSize: 6,
+          //symbol: 'circle' // 점의 모양을 원으로 설정
         }
       ]
     };
     myChart.setOption(option);
   };
-
+  
   const renderPostureChart = (data: { posture: number; updated_at: string }[]) => {
     const chartDom = document.getElementById('posture');
     if (!chartDom) return;
+    
     const myChart = echarts.init(chartDom);
-    const postureText = ['Downstair', 'Upstair', 'Running', 'Sitdown', 'StandUp', 'Walking', 'Fall'];
-    const sortedData = data.sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+    const sortedData = data.sort((a, b) => 
+      new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+    );
+
+    const postureNames = [
+      'Downstair',
+      'Upstair',
+      'Running',
+      'Sitdown',
+      'StandUp',
+      'Walking',
+      'Fall'
+    ];
+
+    const colors = [
+      '#5470c6',  // Blue for Downstair
+      '#91cc75',  // Green for Upstair
+      '#fac858',  // Yellow for Running
+      '#ee6666',  // Red for Sitdown
+      '#73c0de',  // Light Blue for StandUp
+      '#3ba272',  // Teal for Walking
+      '#fc8452'   // Orange for Fall
+    ];
+
     const option = {
+      title: {
+        text: 'User Posture History',
+        left: 'center',
+        textStyle: {
+          fontSize: 24,         // 제목 글자 크기 증가
+          fontWeight: 'bold'    // 제목 글자 굵기 설정
+        }
+      },
       tooltip: {
         trigger: 'axis',
         axisPointer: {
           type: 'shadow'
         },
-        formatter: (params: any) => {
-          const postureText = ['Downstair', 'Upstair', 'Running', 'Sitdown', 'StandUp', 'Walking', 'Fall'];
-          const posture = params[0].data[1];
-          return `${params[0].data[0]}<br/>자세: ${postureText[posture]}`;
+        formatter: (params: TooltipParam[]) => {
+          const activeSeriesIndex = params.findIndex((param: TooltipParam) => param.data === 1);
+          const time = params[0].axisValue;
+          const posture = postureNames[activeSeriesIndex];
+          return `${time}<br/>Posture: ${posture}`;
         }
       },
-      legend: {},
+      legend: {
+        data: postureNames,
+        top: 40,
+        itemWidth: 27,     // 범례 아이템의 너비
+        itemHeight: 17,    // 범례 아이템의 높이
+        textStyle: {
+          fontSize: 15     // 범례 텍스트 크기
+        },
+      },
       grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '70%',
+        left: '8%',
+        right: '10%',
+        bottom: '30%',
+        top: '20%',
         containLabel: true
       },
       xAxis: {
-        type: 'value'
+        type: 'category',
+        data: sortedData.map(item => dayjs(item.updated_at).format('MM-DD HH:mm:ss')),
+        axisLabel: {
+          interval: 0,
+          rotate: 30  // 날짜 레이블이 겹치지 않도록 회전
+        },
+        axisTick: {
+          alignWithLabel: true  // 눈금을 레이블 중앙에 맞춤
+        }
       },
       yAxis: {
         type: 'category',
-        data: ['posture']
+        max: 1,
+        data: ['','자세'],
+        axisLabel: {
+          //align: 'rignt',  // 눈금 텍스트를 중앙에 위치
+          padding: [30, 0, 30,0]  // 텍스트와 눈금 사이의 간격 조정
+        }
       },
-      series: postureText.map((text, index) => ({
-        name: text,
+      series: postureNames.map((name, index) => ({
+        name: name,
         type: 'bar',
         stack: 'total',
-        label: {
-          show: true
-        },
         emphasis: {
           focus: 'series'
         },
-        data: sortedData.map(item => (item.posture === index ? 1 : 0))
+        barWidth: '100%',  // bar 너비를 100%로 설정
+        //barMaxWidth: 60,  // bar의 최대 너비를 60px로 제한
+        barGap: '0%',     // bar 사이의 간격을 0으로 설정
+        data: sortedData.map(item => item.posture === index ? 1 : 0),
+        itemStyle: {
+          color: colors[index]
+        }
       }))
     };
+
     myChart.setOption(option);
+    // 창 크기가 변경될 때 차트 크기 조정
+    window.addEventListener('resize', () => {
+      myChart.resize();
+    });
   };
+
 
   return (
     <div>
